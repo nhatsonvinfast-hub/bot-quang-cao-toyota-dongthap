@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Đăng nhập{% endblock %}
+{% block guest_content %}
+<div class="login-wrap">
+  <div class="login-card">
+    <h1>Content Studio</h1>
+    <p>Đăng nhập để quản lý nội dung Facebook</p>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="flash-stack">
+        {% for category, message in messages %}
+          <div class="flash flash-{{ category }}">{{ message }}</div>
+        {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+    <form method="post">
+      <div class="form-group">
+        <label>Tên đăng nhập</label>
+        <input type="text" name="username" required autofocus>
+      </div>
+      <div class="form-group">
+        <label>Mật khẩu</label>
+        <input type="password" name="password" required>
+      </div>
+      <button class="btn" type="submit" style="width:100%; justify-content:center;">Đăng nhập</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Sửa bài viết' if post else 'Tạo bài mới' }}{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1 class="page-title">{{ 'Sửa bài viết' if post else 'Tạo bài mới' }}</h1>
+</div>
+
+<form method="post" class="form-card">
+  <div class="form-group">
+    <label>Trang Facebook</label>
+    <select name="page_id" required>
+      {% for p in pages %}
+      <option value="{{ p.id }}" {{ 'selected' if post and post.page_id == p.id }}>{{ p.name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+
+  <div class="form-group">
+    <label>Nội dung</label>
+    <textarea name="content" required placeholder="Nội dung bài đăng...">{{ post.content if post else '' }}</textarea>
+  </div>
+
+  <div class="form-group">
+    <label>Nhãn phân loại (tuỳ chọn)</label>
+    <input type="text" name="tag" value="{{ post.tag if post else '' }}" placeholder="Khuyến mãi, Giới thiệu xe...">
+  </div>
+
+  <div class="form-group">
+    <label>Link đính kèm (tuỳ chọn)</label>
+    <input type="url" name="link" value="{{ post.link if post else '' }}" placeholder="https://...">
+  </div>
+
+  <div class="form-actions">
+    <button class="btn btn-secondary" type="submit" name="action" value="draft">Lưu nháp</button>
+    <button class="btn" type="submit" name="action" value="submit">Gửi duyệt</button>
+    <a class="btn btn-secondary" href="{{ url_for('posts.list_posts') }}">Hủy</a>
+  </div>
+</form>
+{% endblock %}

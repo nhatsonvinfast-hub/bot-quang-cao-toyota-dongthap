@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}Bài viết{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Bài viết</h1>
+    <div class="page-date">
+      {% if active_page_id %}
+        Bài viết của {{ pages | selectattr('id', 'equalto', active_page_id) | map(attribute='name') | first }}
+      {% else %}
+        Bài viết của tất cả các Trang
+      {% endif %}
+    </div>
+  </div>
+  <a class="btn" href="{{ url_for('posts.new_post') }}">+ Tạo bài mới</a>
+</div>
+
+<div class="tabs">
+  {% for key, label in tab_labels.items() %}
+  <a class="tab {{ 'active' if tab == key }}"
+     href="{{ url_for('posts.list_posts', tab=key, page_id=active_page_id) }}">
+    {{ label }}{% if counts.get(key) is not none %} ({{ counts.get(key) }}){% endif %}
+  </a>
+  {% endfor %}
+</div>
+
+{% if not posts %}
+<div class="empty-state">Chưa có bài viết nào ở trạng thái này.</div>
+{% else %}
+<div class="post-grid">
+  {% for post in posts %}
+  <a class="post-card" href="{{ url_for('posts.view_post', post_id=post.id) }}">
+    <div class="post-card-head">
+      <div class="avatar">{{ (post.page.name or "?")[:2] | upper }}</div>
+      <div>
+        <div class="post-meta-name">{{ post.page.name }}</div>
+        <div class="post-meta-sub">{{ post.author.display_name or post.author.username }}</div>
+      </div>
+      <span class="badge badge-{{ post.status }}">{{ post.status_label }}</span>
+    </div>
+    <div class="post-body post-clamp">{{ post.content }}</div>
+    <div class="post-time">
+      {% if post.status == 'scheduled' and post.scheduled_time %}
+        Dự kiến lúc {{ post.scheduled_time.strftime('%H:%M ngày %d/%m') }}
+      {% elif post.status == 'posted' %}
+        Đã đăng {{ post.updated_at.strftime('%H:%M ngày %d/%m') }}
+      {% else %}
+        Cập nhật {{ post.updated_at.strftime('%H:%M ngày %d/%m') }}
+      {% endif %}
+    </div>
+    {% if post.tag %}<div class="post-tag">{{ post.tag }}</div>{% endif %}
+  </a>
+  {% endfor %}
+</div>
+{% endif %}
+{% endblock %}

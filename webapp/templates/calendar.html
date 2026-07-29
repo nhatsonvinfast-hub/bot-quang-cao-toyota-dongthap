@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Lịch đăng{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1 class="page-title">Lịch đăng</h1>
+</div>
+
+{% if not by_date %}
+<div class="empty-state">Chưa có bài nào được lên lịch.</div>
+{% else %}
+{% for date, items in by_date %}
+<div class="calendar-day">
+  <h3>{{ date }}</h3>
+  {% for post in items %}
+  <a class="calendar-item" href="{{ url_for('posts.view_post', post_id=post.id) }}" style="text-decoration:none; color:inherit;">
+    <div>
+      <strong>{{ post.page.name }}</strong>
+      <div class="post-time">{{ post.content[:80] }}</div>
+    </div>
+    <div>
+      <span class="badge badge-{{ post.status }}">{{ post.status_label }}</span>
+      <div class="post-time">
+        {% if post.scheduled_time %}{{ post.scheduled_time.strftime('%H:%M') }}{% endif %}
+      </div>
+    </div>
+  </a>
+  {% endfor %}
+</div>
+{% endfor %}
+{% endif %}
+{% endblock %}

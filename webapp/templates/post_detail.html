@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}Chi tiết bài viết{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1 class="page-title">Chi tiết bài viết</h1>
+  <span class="badge badge-{{ post.status }}">{{ post.status_label }}</span>
+</div>
+
+<div class="detail-card">
+  <div class="detail-meta">
+    Trang <strong>{{ post.page.name }}</strong> ·
+    Tác giả {{ post.author.display_name or post.author.username }} ·
+    Cập nhật {{ post.updated_at.strftime('%H:%M %d/%m/%Y') }}
+  </div>
+
+  <div class="detail-content">{{ post.content }}</div>
+
+  {% if post.link %}<p><a href="{{ post.link }}" target="_blank">{{ post.link }}</a></p>{% endif %}
+  {% if post.tag %}<p class="post-time">Nhãn: {{ post.tag }}</p>{% endif %}
+
+  {% if post.status == 'scheduled' and post.scheduled_time %}
+  <p class="post-time">Dự kiến đăng lúc {{ post.scheduled_time.strftime('%H:%M %d/%m/%Y') }}</p>
+  {% endif %}
+
+  {% if post.status == 'rejected' and post.reject_reason %}
+  <div class="flash flash-error">Lý do từ chối: {{ post.reject_reason }}</div>
+  {% endif %}
+
+  <div class="form-actions">
+    {% if post.status in ['draft', 'rejected'] and (post.author_id == current_user.id or current_user.is_admin) %}
+      <a class="btn btn-secondary" href="{{ url_for('posts.edit_post', post_id=post.id) }}">Sửa</a>
+      <form method="post" action="{{ url_for('posts.submit_post', post_id=post.id) }}">
+        <button class="btn" type="submit">Gửi duyệt</button>
+      </form>
+    {% endif %}
+
+    {% if post.status in ['draft', 'pending'] and (post.author_id == current_user.id or current_user.is_admin) %}
+      <form method="post" action="{{ url_for('posts.delete_post', post_id=post.id) }}"
+            onsubmit="return confirm('Xóa bài viết này?');">
+        <button class="btn btn-danger" type="submit">Xóa</button>
+      </form>
+    {% endif %}
+  </div>
+
+  {% if post.status == 'pending' and current_user.can_approve %}
+  <hr style="margin:24px 0; border:none; border-top:1px solid var(--border);">
+  <h3 style="font-size:15px; margin-bottom:12px;">Duyệt bài</h3>
+  <form method="post" action="{{ url_for('posts.approve_post', post_id=post.id) }}" class="form-group">
+    <label>Thời gian đăng (bỏ trống nếu đăng ngay)</label>
+    <input type="datetime-local" name="scheduled_time">
+    <div class="form-actions">
+      <button class="btn" type="submit">Duyệt &amp; lên lịch</button>
+      <button class="btn btn-secondary" type="submit" name="publish_now" value="1">Duyệt &amp; đăng ngay</button>
+    </div>
+  </form>
+  <form method="post" action="{{ url_for('posts.reject_post', post_id=post.id) }}">
+    <div class="form-group">
+      <label>Lý do từ chối</label>
+      <input type="text" name="reason" placeholder="Vì sao bài này chưa đạt?">
+    </div>
+    <button class="btn btn-danger" type="submit">Từ chối</button>
+  </form>
+  {% endif %}
+</div>
+{% endblock %}

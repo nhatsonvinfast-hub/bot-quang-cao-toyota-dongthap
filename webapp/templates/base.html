@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}Content Studio{% endblock %}</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+{% if current_user.is_authenticated %}
+<div class="layout">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-badge">CS</div>
+      <div>
+        <div class="brand-name">Content Studio</div>
+        <div class="brand-sub">{{ current_user.display_name or current_user.username }}</div>
+      </div>
+    </div>
+
+    <nav class="nav-group">
+      <div class="nav-label">Quản lý nội dung</div>
+      <a class="nav-link {{ 'active' if request.endpoint == 'posts.list_posts' }}" href="{{ url_for('posts.list_posts') }}">Bài viết</a>
+      <a class="nav-link {{ 'active' if request.endpoint == 'posts.calendar_view' }}" href="{{ url_for('posts.calendar_view') }}">Lịch đăng</a>
+      <a class="nav-link {{ 'active' if request.endpoint == 'stats.stats_view' }}" href="{{ url_for('stats.stats_view') }}">Thống kê</a>
+      {% if current_user.is_admin %}
+      <a class="nav-link {{ 'active' if request.endpoint == 'pages.manage_pages' }}" href="{{ url_for('pages.manage_pages') }}">Cài đặt</a>
+      <a class="nav-link {{ 'active' if request.endpoint == 'auth.manage_users' }}" href="{{ url_for('auth.manage_users') }}">Người dùng</a>
+      {% endif %}
+    </nav>
+
+    <div class="nav-group">
+      <div class="nav-label">Trang Facebook</div>
+      <a class="nav-link {{ 'active' if not request.args.get('page_id') and request.endpoint == 'posts.list_posts' }}" href="{{ url_for('posts.list_posts') }}">Tất cả Trang</a>
+      {% for p in pages_sidebar %}
+      <a class="nav-link" href="{{ url_for('posts.list_posts', page_id=p.id) }}">
+        <span class="dot {{ 'on' if p.is_active else 'off' }}"></span>{{ p.name }}
+      </a>
+      {% endfor %}
+    </div>
+
+    <div class="sidebar-footer">
+      <a href="{{ url_for('auth.logout') }}">Đăng xuất</a>
+    </div>
+  </aside>
+
+  <main class="content">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="flash-stack">
+        {% for category, message in messages %}
+          <div class="flash flash-{{ category }}">{{ message }}</div>
+        {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+    {% block content %}{% endblock %}
+  </main>
+</div>
+{% else %}
+  {% block guest_content %}{% endblock %}
+{% endif %}
+</body>
+</html>

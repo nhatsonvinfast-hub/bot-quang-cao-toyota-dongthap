@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Cài đặt Trang{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1 class="page-title">Cài đặt · Trang Facebook</h1>
+</div>
+
+<table style="margin-bottom:28px;">
+  <thead><tr><th>Trang</th><th>Page ID</th><th>Trạng thái</th><th></th></tr></thead>
+  <tbody>
+    {% for p in pages %}
+    <tr>
+      <td>{{ p.name }}</td>
+      <td>{{ p.fb_page_id }}</td>
+      <td>{{ 'Hoạt động' if p.is_active else 'Tạm tắt' }}</td>
+      <td>
+        <form method="post" action="{{ url_for('pages.toggle_page', page_id=p.id) }}">
+          <button class="btn btn-secondary btn-sm" type="submit">{{ 'Tắt' if p.is_active else 'Bật' }}</button>
+        </form>
+      </td>
+    </tr>
+    {% else %}
+    <tr><td colspan="4">Chưa có Trang nào.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<div class="form-card">
+  <h3 style="margin-top:0;">Thêm / cập nhật Trang</h3>
+  <form method="post">
+    <div class="form-group">
+      <label>Page ID</label>
+      <input type="text" name="fb_page_id" required placeholder="1143651805508501">
+    </div>
+    <div class="form-group">
+      <label>Page Access Token</label>
+      <input type="text" name="access_token" required placeholder="EAA...">
+    </div>
+    <button class="btn" type="submit">Lưu Trang</button>
+  </form>
+</div>
+{% endblock %}

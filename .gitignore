@@ -7,3 +7,6 @@ data/*.json
 data/app.db
 data/.flask_secret
 !data/.gitkeep
+
+.vercel
+.env*

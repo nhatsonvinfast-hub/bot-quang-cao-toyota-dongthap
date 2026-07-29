@@ -27,7 +27,16 @@ if not SECRET_KEY:
         SECRET_KEY = secrets.token_hex(32)
         SECRET_KEY_PATH.write_text(SECRET_KEY)
 
-SQLALCHEMY_DATABASE_URI = f"sqlite:///{(DATA_DIR / 'app.db').as_posix()}"
+_pg_url = os.getenv("DATABASE_URL") or os.getenv("POSTGRES_URL")
+if _pg_url:
+    # Neon/Vercel Postgres hands out real, persistent storage — unlike the
+    # SQLite fallback below, this survives cold starts on serverless.
+    if _pg_url.startswith("postgres://"):
+        _pg_url = _pg_url.replace("postgres://", "postgresql://", 1)
+    SQLALCHEMY_DATABASE_URI = _pg_url
+    SQLALCHEMY_ENGINE_OPTIONS = {"pool_pre_ping": True, "pool_recycle": 280}
+else:
+    SQLALCHEMY_DATABASE_URI = f"sqlite:///{(DATA_DIR / 'app.db').as_posix()}"
 SQLALCHEMY_TRACK_MODIFICATIONS = False
 
 GRAPH_API_VERSION = "v20.0"

@@ -1,6 +1,6 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
-from flask import Blueprint, abort, flash, redirect, render_template, request, url_for
+from flask import Blueprint, abort, flash, jsonify, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
 
 from meta_client import MetaAPIError, MetaClient
@@ -202,6 +202,33 @@ def delete_post(post_id):
     db.session.commit()
     flash("Đã xóa bài viết.", "success")
     return redirect(url_for("posts.list_posts"))
+
+
+@posts_bp.route("/posts/sync-external", methods=["POST"])
+@login_required
+def sync_external():
+    """Marks posts as scheduled/posted when they were published directly via
+    the Graph API (bypassing the approve flow), so the dashboard reflects
+    reality. Admin only. Body: [{post_id, fb_post_id, scheduled_time, status}]
+    """
+    if not current_user.is_admin:
+        abort(403)
+    entries = request.get_json(force=True)
+    updated = 0
+    for entry in entries:
+        post = db.session.get(Post, entry["post_id"])
+        if not post:
+            continue
+        post.fb_post_id = entry.get("fb_post_id")
+        post.status = entry.get("status", "scheduled")
+        if entry.get("scheduled_time"):
+            post.scheduled_time = datetime.fromtimestamp(
+                entry["scheduled_time"], tz=timezone.utc
+            )
+        post.approved_by_id = current_user.id
+        updated += 1
+    db.session.commit()
+    return jsonify({"updated": updated})
 
 
 @posts_bp.route("/calendar")

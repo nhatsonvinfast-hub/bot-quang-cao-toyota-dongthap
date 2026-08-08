@@ -5,7 +5,7 @@
   <h1 class="page-title">{{ 'Sửa bài viết' if post else 'Tạo bài mới' }}</h1>
 </div>
 
-<form method="post" class="form-card">
+<form method="post" class="form-card" enctype="multipart/form-data">
   <div class="form-group">
     <label>Trang Facebook</label>
     <select name="page_id" required>
@@ -28,6 +28,17 @@
   <div class="form-group">
     <label>Link đính kèm (tuỳ chọn)</label>
     <input type="url" name="link" value="{{ post.link if post else '' }}" placeholder="https://...">
+  </div>
+
+  <div class="form-group">
+    <label>Hình ảnh đăng kèm (tuỳ chọn)</label>
+    {% if post and post.image_data %}
+    <img src="{{ url_for('posts.post_image', post_id=post.id) }}" style="max-width:100%; border-radius:8px; border:1px solid var(--border); margin-bottom:10px; display:block;">
+    <label style="font-weight:400; font-size:13px; display:flex; align-items:center; gap:6px; margin-bottom:10px;">
+      <input type="checkbox" name="remove_image" value="1"> Xoá ảnh hiện tại
+    </label>
+    {% endif %}
+    <input type="file" name="image" accept="image/*">
   </div>
 
   <div class="form-actions">

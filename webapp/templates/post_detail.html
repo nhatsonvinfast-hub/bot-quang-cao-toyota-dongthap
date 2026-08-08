@@ -15,6 +15,16 @@
 
   <div class="detail-content">{{ post.content }}</div>
 
+  {% if post.image_data %}
+  <img src="{{ url_for('posts.post_image', post_id=post.id) }}" style="max-width:100%; border-radius:8px; border:1px solid var(--border); margin-bottom:14px; display:block;">
+  {% endif %}
+  {% if post.status in ['draft', 'pending', 'rejected'] and (post.author_id == current_user.id or current_user.is_admin) %}
+  <form method="post" action="{{ url_for('posts.replace_image', post_id=post.id) }}" enctype="multipart/form-data" style="display:flex; gap:8px; align-items:center; margin-bottom:18px;">
+    <input type="file" name="image" accept="image/*" style="flex:1;">
+    <button class="btn btn-secondary btn-sm" type="submit">{{ 'Đổi ảnh' if post.image_data else 'Thêm ảnh' }}</button>
+  </form>
+  {% endif %}
+
   {% if post.link %}<p><a href="{{ post.link }}" target="_blank">{{ post.link }}</a></p>{% endif %}
   {% if post.tag %}<p class="post-time">Nhãn: {{ post.tag }}</p>{% endif %}
 

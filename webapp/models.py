@@ -62,6 +62,8 @@ class Post(db.Model):
     content = db.Column(db.Text, nullable=False)
     link = db.Column(db.String(500))
     tag = db.Column(db.String(80))
+    image_data = db.Column(db.LargeBinary)
+    image_mime = db.Column(db.String(40))
 
     status = db.Column(db.String(20), nullable=False, default="draft")
     scheduled_time = db.Column(db.DateTime)

@@ -1,6 +1,16 @@
 from datetime import datetime, timezone
 
-from flask import Blueprint, abort, flash, jsonify, redirect, render_template, request, url_for
+from flask import (
+    Blueprint,
+    Response,
+    abort,
+    flash,
+    jsonify,
+    redirect,
+    render_template,
+    request,
+    url_for,
+)
 from flask_login import current_user, login_required
 
 from meta_client import MetaAPIError, MetaClient
@@ -88,6 +98,10 @@ def new_post():
             tag=tag,
             status=status,
         )
+        image_file = request.files.get("image")
+        if image_file and image_file.filename:
+            post.image_data = image_file.read()
+            post.image_mime = image_file.mimetype or "image/png"
         db.session.add(post)
         db.session.commit()
         flash("Đã lưu bài viết." if status == "draft" else "Đã gửi duyệt.", "success")
@@ -121,11 +135,44 @@ def edit_post(post_id):
         post.tag = request.form.get("tag", "").strip() or None
         action = request.form.get("action", "draft")
         post.status = "pending" if action == "submit" else "draft"
+        image_file = request.files.get("image")
+        if image_file and image_file.filename:
+            post.image_data = image_file.read()
+            post.image_mime = image_file.mimetype or "image/png"
+        elif request.form.get("remove_image") == "1":
+            post.image_data = None
+            post.image_mime = None
         db.session.commit()
         flash("Đã cập nhật bài viết." if post.status == "draft" else "Đã gửi duyệt.", "success")
         return redirect(url_for("posts.list_posts"))
 
     return render_template("post_form.html", pages=pages, post=post)
+
+
+@posts_bp.route("/posts/<int:post_id>/image")
+@login_required
+def post_image(post_id):
+    post = db.session.get(Post, post_id) or abort(404)
+    if not post.image_data:
+        abort(404)
+    return Response(post.image_data, mimetype=post.image_mime or "image/png")
+
+
+@posts_bp.route("/posts/<int:post_id>/image", methods=["POST"])
+@login_required
+def replace_image(post_id):
+    post = db.session.get(Post, post_id) or abort(404)
+    if post.author_id != current_user.id and not current_user.is_admin:
+        abort(403)
+    image_file = request.files.get("image")
+    if not image_file or not image_file.filename:
+        flash("Chưa chọn ảnh.", "error")
+        return redirect(url_for("posts.view_post", post_id=post.id))
+    post.image_data = image_file.read()
+    post.image_mime = image_file.mimetype or "image/png"
+    db.session.commit()
+    flash("Đã cập nhật ảnh.", "success")
+    return redirect(url_for("posts.view_post", post_id=post.id))
 
 
 @posts_bp.route("/posts/<int:post_id>/submit", methods=["POST"])
@@ -169,9 +216,13 @@ def approve_post(post_id):
     scheduled_time_raw = request.form.get("scheduled_time", "").strip()
 
     client = MetaClient(post.page.fb_page_id, post.page.access_token)
+    has_image = bool(post.image_data)
     try:
         if publish_now:
-            result = client.post_text(post.content, link=post.link)
+            if has_image:
+                result = client.post_photo_bytes(post.image_data, post.content)
+            else:
+                result = client.post_text(post.content, link=post.link)
             post.fb_post_id = result.get("id")
             post.status = "posted"
         else:
@@ -179,7 +230,10 @@ def approve_post(post_id):
                 flash("Cần chọn thời gian đăng, hoặc chọn 'Đăng ngay'.", "error")
                 return redirect(url_for("posts.view_post", post_id=post.id))
             scheduled_dt = datetime.fromisoformat(scheduled_time_raw)
-            result = client.schedule_post(post.content, scheduled_dt, link=post.link)
+            if has_image:
+                result = client.schedule_photo_bytes(post.image_data, post.content, scheduled_dt)
+            else:
+                result = client.schedule_post(post.content, scheduled_dt, link=post.link)
             post.fb_post_id = result.get("id")
             post.scheduled_time = scheduled_dt
             post.status = "scheduled"

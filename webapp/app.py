@@ -48,6 +48,13 @@ def create_app():
 
     with app.app_context():
         db.create_all()
+        if db.engine.url.get_backend_name() == "postgresql":
+            from sqlalchemy import text
+
+            with db.engine.begin() as conn:
+                conn.execute(text("ALTER TABLE post ADD COLUMN IF NOT EXISTS image_data BYTEA"))
+                conn.execute(text("ALTER TABLE post ADD COLUMN IF NOT EXISTS image_mime VARCHAR(40)"))
+
         from seed import ensure_seed_data
 
         ensure_seed_data()

@@ -43,6 +43,33 @@ class MetaClient:
             params["link"] = link
         return self._request("POST", f"{self.page_id}/feed", params=params)
 
+    def post_photo_bytes(self, image_bytes: bytes, caption: str) -> dict:
+        resp = requests.post(
+            f"{self.base}/{self.page_id}/photos",
+            files={"source": ("image.png", image_bytes)},
+            data={"caption": caption, "access_token": self.page_access_token},
+            timeout=60,
+        )
+        if resp.status_code >= 400:
+            raise MetaAPIError(f"Graph API error {resp.status_code}: {resp.text}")
+        return resp.json()
+
+    def schedule_photo_bytes(self, image_bytes: bytes, caption: str, publish_time: datetime) -> dict:
+        resp = requests.post(
+            f"{self.base}/{self.page_id}/photos",
+            files={"source": ("image.png", image_bytes)},
+            data={
+                "caption": caption,
+                "published": "false",
+                "scheduled_publish_time": int(publish_time.timestamp()),
+                "access_token": self.page_access_token,
+            },
+            timeout=60,
+        )
+        if resp.status_code >= 400:
+            raise MetaAPIError(f"Graph API error {resp.status_code}: {resp.text}")
+        return resp.json()
+
     def list_recent_posts(self, limit: int = 10) -> list:
         data = self._request(
             "GET",

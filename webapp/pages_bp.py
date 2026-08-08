@@ -2,7 +2,7 @@ from flask import Blueprint, abort, flash, redirect, render_template, request, u
 from flask_login import current_user, login_required
 
 from meta_client import MetaAPIError, MetaClient
-from models import Page, db
+from models import Page, Post, db
 
 pages_bp = Blueprint("pages", __name__)
 
@@ -57,4 +57,36 @@ def toggle_page(page_id):
     page = db.session.get(Page, page_id) or abort(404)
     page.is_active = not page.is_active
     db.session.commit()
+    return redirect(url_for("pages.manage_pages"))
+
+
+@pages_bp.route("/settings/pages/<int:page_id>/rename", methods=["POST"])
+@login_required
+def rename_page(page_id):
+    if not current_user.is_admin:
+        abort(403)
+    page = db.session.get(Page, page_id) or abort(404)
+    new_name = request.form.get("name", "").strip()
+    if not new_name:
+        flash("Tên Trang không được để trống.", "error")
+        return redirect(url_for("pages.manage_pages"))
+    page.name = new_name
+    db.session.commit()
+    flash("Đã đổi tên Trang.", "success")
+    return redirect(url_for("pages.manage_pages"))
+
+
+@pages_bp.route("/settings/pages/<int:page_id>/delete", methods=["POST"])
+@login_required
+def delete_page(page_id):
+    if not current_user.is_admin:
+        abort(403)
+    page = db.session.get(Page, page_id) or abort(404)
+    post_count = Post.query.filter_by(page_id=page_id).count()
+    if post_count:
+        flash(f"Không thể xóa: Trang này còn {post_count} bài viết liên kết.", "error")
+        return redirect(url_for("pages.manage_pages"))
+    db.session.delete(page)
+    db.session.commit()
+    flash("Đã xóa Trang.", "success")
     return redirect(url_for("pages.manage_pages"))

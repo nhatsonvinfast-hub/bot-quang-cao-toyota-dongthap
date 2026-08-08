@@ -10,12 +10,21 @@
   <tbody>
     {% for p in pages %}
     <tr>
-      <td>{{ p.name }}</td>
+      <td>
+        <form method="post" action="{{ url_for('pages.rename_page', page_id=p.id) }}" style="display:flex; gap:6px;">
+          <input type="text" name="name" value="{{ p.name }}" style="padding:4px 8px; font-size:13px; border:1px solid var(--border); border-radius:6px; max-width:220px;">
+          <button class="btn btn-secondary btn-sm" type="submit">Lưu tên</button>
+        </form>
+      </td>
       <td>{{ p.fb_page_id }}</td>
       <td>{{ 'Hoạt động' if p.is_active else 'Tạm tắt' }}</td>
-      <td>
-        <form method="post" action="{{ url_for('pages.toggle_page', page_id=p.id) }}">
+      <td style="white-space:nowrap;">
+        <form method="post" action="{{ url_for('pages.toggle_page', page_id=p.id) }}" style="display:inline;">
           <button class="btn btn-secondary btn-sm" type="submit">{{ 'Tắt' if p.is_active else 'Bật' }}</button>
+        </form>
+        <form method="post" action="{{ url_for('pages.delete_page', page_id=p.id) }}" style="display:inline;"
+              onsubmit="return confirm('Xóa Trang {{ p.name }}? Chỉ xóa được nếu không còn bài viết liên kết.');">
+          <button class="btn btn-danger btn-sm" type="submit">Xóa</button>
         </form>
       </td>
     </tr>
